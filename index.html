@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nexor Tools">
+<title>Nexor Tools</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --cyan:#00f5ff;--purple:#a855f7;--dark:#050a14;
+  --card:rgba(0,245,255,0.04);--border:rgba(0,245,255,0.12);
+}
+body{background:var(--dark);color:#e0f7fa;font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden;}
+
+/* CANVAS PARTICLES */
+#particleCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* ===== LOADING ===== */
+#loading{position:fixed;inset:0;z-index:999;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.logo-ring{position:relative;width:120px;height:120px;}
+.logo-ring svg{position:absolute;inset:0;}
+.ring-outer{animation:spinRing 2s linear infinite;}
+.ring-inner{animation:spinRing 1.2s linear infinite reverse;}
+.logo-inner{position:absolute;inset:18px;background:radial-gradient(circle,#0a1628,#050a14);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--cyan);text-shadow:0 0 20px var(--cyan);letter-spacing:2px;}
+@keyframes spinRing{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.load-title{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;letter-spacing:8px;color:var(--cyan);text-shadow:0 0 30px var(--cyan),0 0 60px rgba(0,245,255,0.3);animation:pulse 1.5s ease-in-out infinite;}
+.load-sub{font-size:10px;letter-spacing:4px;color:var(--purple);opacity:.8;}
+.load-bar-wrap{width:240px;height:2px;background:rgba(0,245,255,0.08);border-radius:99px;overflow:hidden;}
+.load-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--purple),var(--cyan));border-radius:99px;box-shadow:0 0 12px var(--cyan);transition:width .08s ease;}
+.load-pct{font-size:11px;color:var(--cyan);opacity:.5;letter-spacing:2px;}
+.load-log{font-size:10px;color:rgba(0,245,255,0.35);letter-spacing:1px;height:14px;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ===== LOGIN ===== */
+#login{display:none;position:relative;z-index:1;min-height:100vh;align-items:center;justify-content:center;padding:24px;}
+.login-box{width:100%;max-width:340px;border:1px solid var(--border);border-radius:18px;padding:32px 22px;background:rgba(5,10,20,0.85);backdrop-filter:blur(20px);position:relative;overflow:hidden;}
+.login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),var(--purple),transparent);}
+.login-box::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--purple),var(--cyan),transparent);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .brand{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 20px var(--cyan);}
+.login-logo .sub{font-size:9px;color:rgba(0,245,255,0.35);letter-spacing:3px;margin-top:5px;}
+.input-wrap{position:relative;margin-bottom:12px;}
+.input-wrap input{width:100%;background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:10px;padding:14px 16px;color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:3px;outline:none;transition:all .3s;}
+.input-wrap input:focus{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,245,255,0.12);}
+.input-wrap input::placeholder{color:rgba(0,245,255,0.2);letter-spacing:1px;}
+.btn-login{width:100%;padding:15px;background:linear-gradient(135deg,rgba(0,245,255,0.1),rgba(168,85,247,0.1));border:1px solid var(--cyan);border-radius:10px;color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:4px;cursor:pointer;transition:all .3s;margin-top:4px;position:relative;overflow:hidden;}
+.btn-login::before{content:'';position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);transform:skewX(-20deg);animation:shimmer 2s infinite;}
+.btn-login:active{transform:scale(.97);box-shadow:0 0 24px rgba(0,245,255,0.25);}
+@keyframes shimmer{0%{left:-60%}100%{left:130%}}
+.login-err{text-align:center;font-size:11px;color:#ff4757;margin-top:10px;min-height:16px;letter-spacing:1px;}
+.login-hint{text-align:center;margin-top:18px;}
+.login-hint p{font-size:9px;color:rgba(0,245,255,0.2);letter-spacing:1px;line-height:1.8;}
+.device-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.25);border-radius:99px;padding:4px 12px;font-size:9px;color:rgba(168,85,247,0.7);margin-top:8px;letter-spacing:1px;}
+
+/* ===== MAIN ===== */
+#main{display:none;position:relative;z-index:1;padding-bottom:40px;min-height:100vh;}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--border);background:rgba(5,10,20,0.8);backdrop-filter:blur(16px);position:sticky;top:0;z-index:10;}
+.topbar-title{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:var(--cyan);letter-spacing:4px;text-shadow:0 0 12px var(--cyan);}
+.logout-btn{font-size:9px;color:rgba(255,71,87,0.6);cursor:pointer;letter-spacing:1px;padding:5px 10px;border:1px solid rgba(255,71,87,0.2);border-radius:5px;transition:all .3s;}
+.logout-btn:active{color:#ff4757;border-color:#ff4757;}
+
+.user-card{margin:14px 16px;padding:14px 16px;background:linear-gradient(135deg,rgba(0,245,255,0.04),rgba(168,85,247,0.04));border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;gap:12px;}
+.user-avatar{width:38px;height:38px;background:radial-gradient(circle,rgba(0,245,255,0.15),rgba(168,85,247,0.08));border:1px solid rgba(0,245,255,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:var(--cyan);}
+.user-info p{font-size:12px;color:var(--cyan);letter-spacing:1px;}
+.user-info span{font-size:9px;color:rgba(168,85,247,0.7);letter-spacing:1px;}
+.user-status{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:9px;color:#2ecc71;}
+.dot-green{width:6px;height:6px;background:#2ecc71;border-radius:50%;box-shadow:0 0 6px #2ecc71;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.section-label{font-size:9px;letter-spacing:3px;color:rgba(0,245,255,0.3);padding:0 20px;margin:20px 0 10px;text-transform:uppercase;}
+
+.feature-list{padding:0 16px;display:flex;flex-direction:column;gap:9px;}
+.feat-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:15px 16px;display:flex;align-items:center;gap:14px;transition:all .3s;}
+.feat-card.active-card{border-color:rgba(0,245,255,0.35);background:rgba(0,245,255,0.06);box-shadow:0 0 16px rgba(0,245,255,0.06);}
+.feat-icon-box{width:36px;height:36px;flex-shrink:0;background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.feat-icon-box svg{width:18px;height:18px;stroke:rgba(0,245,255,0.5);fill:none;stroke-width:1.5;transition:stroke .3s;}
+.feat-card.active-card .feat-icon-box{border-color:rgba(0,245,255,0.3);background:rgba(0,245,255,0.08);}
+.feat-card.active-card .feat-icon-box svg{stroke:var(--cyan);filter:drop-shadow(0 0 4px var(--cyan));}
+.feat-info{flex:1;}
+.feat-name{font-size:13px;color:#c8eeff;letter-spacing:.5px;}
+.feat-desc{font-size:9px;color:rgba(0,245,255,0.3);margin-top:2px;letter-spacing:.5px;}
+
+/* Toggle */
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:rgba(0,0,0,0.5);border:1px solid rgba(0,245,255,0.15);border-radius:99px;cursor:pointer;transition:all .3s;}
+.slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:rgba(0,245,255,0.3);border-radius:50%;transition:all .3s;}
+.toggle input:checked+.slider{background:rgba(0,245,255,0.1);border-color:var(--cyan);box-shadow:0 0 10px rgba(0,245,255,0.15);}
+.toggle input:checked+.slider::before{transform:translateX(20px);background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+
+/* Monitor */
+.monitor-box{margin:0 16px;background:rgba(0,0,0,0.6);border:1px solid var(--border);border-radius:13px;padding:20px;display:flex;align-items:center;justify-content:center;min-height:80px;position:relative;overflow:hidden;}
+.monitor-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,255,0.2),transparent);}
+.dev-credit{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:4px;color:rgba(0,245,255,0.5);text-align:center;transition:all .3s;}
+.dev-credit.injecting{color:var(--purple);text-shadow:0 0 20px var(--purple);animation:creditPulse .4s ease-in-out infinite alternate;}
+@keyframes creditPulse{from{opacity:.6;letter-spacing:4px}to{opacity:1;letter-spacing:6px}}
+
+.inject-log{display:none;width:100%;font-size:10px;line-height:2;color:rgba(168,85,247,0.7);}
+.inject-log .iline{display:flex;justify-content:space-between;}
+.inject-log .iline .ival{color:#ff6b35;}
+.inject-log .iline.done .ival{color:#2ecc71;}
+
+/* GASKEN */
+.gasken-wrap{padding:0 16px;margin-top:10px;}
+.btn-gasken{width:100%;padding:20px;background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(0,245,255,0.08));border:1px solid rgba(168,85,247,0.5);border-radius:14px;color:#fff;font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;letter-spacing:8px;cursor:pointer;position:relative;overflow:hidden;transition:all .3s;text-shadow:0 0 20px var(--purple);box-shadow:0 0 24px rgba(168,85,247,0.1),inset 0 0 30px rgba(168,85,247,0.05);}
+.btn-gasken::before{content:'';position:absolute;top:-50%;left:-60%;width:35%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);transform:skewX(-20deg);animation:shimmer 2.5s infinite;}
+.btn-gasken::after{content:'';position:absolute;inset:0;border-radius:14px;background:transparent;transition:all .3s;}
+.btn-gasken:active{transform:scale(.96);box-shadow:0 0 40px rgba(168,85,247,0.4),0 0 80px rgba(0,245,255,0.1);}
+.btn-gasken.locked{opacity:.5;cursor:not-allowed;}
+
+/* Launch */
+.launch-wrap{padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.btn-launch{padding:16px 10px;border-radius:13px;border:1px solid;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;cursor:pointer;text-align:center;transition:all .3s;display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;position:relative;overflow:hidden;}
+.btn-launch::before{content:'';position:absolute;top:-50%;left:-60%;width:35%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent);transform:skewX(-20deg);animation:shimmer 3s infinite;}
+.launch-icon-svg{width:26px;height:26px;stroke-width:1.5;fill:none;}
+.btn-ff{background:rgba(255,107,53,0.06);border-color:rgba(255,107,53,0.35);color:#ff6b35;}
+.btn-ff .launch-icon-svg{stroke:#ff6b35;filter:drop-shadow(0 0 4px rgba(255,107,53,0.5));}
+.btn-ffmax{background:rgba(0,245,255,0.04);border-color:rgba(0,245,255,0.25);color:var(--cyan);}
+.btn-ffmax .launch-icon-svg{stroke:var(--cyan);filter:drop-shadow(0 0 4px rgba(0,245,255,0.5));}
+.btn-launch:active{transform:scale(.95);}
+
+/* Inject flash overlay */
+.inject-flash{display:none;position:fixed;inset:0;z-index:50;pointer-events:none;background:radial-gradient(circle at center,rgba(168,85,247,0.15),transparent 70%);}
+</style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+<div class="inject-flash" id="injectFlash"></div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="logo-ring">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(0,245,255,0.06)" stroke-width="1.5"/>
+      <circle cx="60" cy="60" r="52" fill="none" stroke="url(#g1)" stroke-width="2"
+        stroke-dasharray="60 267" stroke-linecap="round" class="ring-outer"/>
+      <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(168,85,247,0.08)" stroke-width="1"/>
+      <circle cx="60" cy="60" r="40" fill="none" stroke="url(#g2)" stroke-width="1.5"
+        stroke-dasharray="40 211" stroke-linecap="round" class="ring-inner"/>
+      <defs>
+        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#a855f7"/>
+          <stop offset="100%" stop-color="#00f5ff"/>
+        </linearGradient>
+        <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#00f5ff"/>
+          <stop offset="100%" stop-color="#a855f7"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="logo-inner">NX</div>
+  </div>
+  <div class="load-title">NEXOR</div>
+  <div class="load-sub">TOOLS SYSTEM v2.4</div>
+  <div class="load-bar-wrap"><div class="load-bar" id="loadBar"></div></div>
+  <div class="load-pct" id="loadPct">0%</div>
+  <div class="load-log" id="loadLog">Initializing system...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="brand">NEXOR TOOLS</div>
+      <div class="sub">SECURE ACCESS PORTAL</div>
+    </div>
+    <div class="input-wrap">
+      <input type="password" id="keyInput" placeholder="Enter License Key..." maxlength="32" autocomplete="off">
+    </div>
+    <button class="btn-login" onclick="doLogin()">UNLOCK ACCESS</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-hint">
+      <p>1 Key hanya untuk 1 perangkat</p>
+      <div class="device-badge">Device: <span id="deviceIdShow"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title">NEXOR TOOLS</div>
+    <div class="logout-btn" onclick="doLogout()">LOGOUT</div>
+  </div>
+
+  <div class="user-card">
+    <div class="user-avatar" id="userAvatar">NX</div>
+    <div class="user-info">
+      <p id="userKeyDisplay">USER</p>
+      <span>LICENSE: ACTIVE</span>
+    </div>
+    <div class="user-status"><div class="dot-green"></div>ONLINE</div>
+  </div>
+
+  <div class="section-label">// FEATURE CONTROL</div>
+  <div class="feature-list">
+
+    <div class="feat-card" id="card-emote">
+      <div class="feat-icon-box">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9h.01M15 9h.01M9 13s1 2 3 2 3-2 3-2"/></svg>
+      </div>
+      <div class="feat-info">
+        <div class="feat-name">Bot Emote</div>
+        <div class="feat-desc">Auto trigger emote sequence</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="tog1" onchange="toggleFeat(this,'card-emote')"><span class="slider"></span></label>
+    </div>
+
+    <div class="feat-card" id="card-stab">
+      <div class="feat-icon-box">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="feat-info">
+        <div class="feat-name">Stabilizer Emote</div>
+        <div class="feat-desc">Smooth emote frame sync</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="tog2" onchange="toggleFeat(this,'card-stab')"><span class="slider"></span></label>
+    </div>
+
+    <div class="feat-card" id="card-touch">
+      <div class="feat-icon-box">
+        <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+      </div>
+      <div class="feat-info">
+        <div class="feat-name">Touch Boost</div>
+        <div class="feat-desc">Optimize touch response rate</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="tog3" onchange="toggleFeat(this,'card-touch')"><span class="slider"></span></label>
+    </div>
+
+    <div class="feat-card" id="card-fps">
+      <div class="feat-icon-box">
+        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="feat-info">
+        <div class="feat-name">FPS Boost</div>
+        <div class="feat-desc">Render pipeline optimizer</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="tog4" onchange="toggleFeat(this,'card-fps')"><span class="slider"></span></label>
+    </div>
+
+  </div>
+
+  <div class="section-label" style="margin-top:22px;">// PROCESS MONITOR</div>
+  <div class="monitor-box" id="monitorBox">
+    <div class="dev-credit" id="devCredit">Dev by ranzyCT</div>
+    <div class="inject-log" id="injectLog"></div>
+  </div>
+
+  <div class="section-label" style="margin-top:22px;">// EXECUTE</div>
+  <div class="gasken-wrap">
+    <button class="btn-gasken" id="btnGasken" onclick="gasken()">GASKEN</button>
+  </div>
+
+  <div class="section-label" style="margin-top:22px;">// LAUNCH GAME</div>
+  <div class="launch-wrap">
+    <a class="btn-launch btn-ff" href="freefire://">
+      <svg class="launch-icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+      FREE FIRE
+    </a>
+    <a class="btn-launch btn-ffmax" href="freefiremax://">
+      <svg class="launch-icon-svg" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      FF MAX
+    </a>
+  </div>
+</div>
+
+<script>
+// ===== PARTICLE NET =====
+(function(){
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [], animId;
+  const NUM = 55, CONNECT_DIST = 120, COLOR = '0,245,255';
+
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
+
+  function Particle(){
+    this.x = Math.random()*W; this.y = Math.random()*H;
+    this.vx = (Math.random()-.5)*.4; this.vy = (Math.random()-.5)*.4;
+    this.r = Math.random()*1.5+.5;
+  }
+  for(let i=0;i<NUM;i++) particles.push(new Particle());
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1;
+      if(p.y<0||p.y>H) p.vy*=-1;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${COLOR},.5)`;
+      ctx.shadowColor=`rgba(${COLOR},1)`;
+      ctx.shadowBlur=6;
+      ctx.fill();
+    });
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<CONNECT_DIST){
+          const op=(1-dist/CONNECT_DIST)*.25;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
+          ctx.strokeStyle=`rgba(${COLOR},${op})`;
+          ctx.shadowBlur=0;
+          ctx.lineWidth=.6;
+          ctx.stroke();
+        }
+      }
+    }
+    animId = requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ===== DEVICE ID =====
+function getDeviceId(){
+  let id=localStorage.getItem('nexor_device');
+  if(!id){id='NX-'+Math.random().toString(36).substr(2,4).toUpperCase()+'-'+Math.random().toString(36).substr(2,4).toUpperCase();localStorage.setItem('nexor_device',id);}
+  return id;
+}
+
+// ===== KEY DB =====
+const VALID_KEYS=['NEXOR-2024-FREE','NEXOR-VIP-001','NEXOR-TEST-999'];
+function getKeyDB(){try{return JSON.parse(localStorage.getItem('nexor_key_db'))||{};}catch{return{};}}
+function saveKeyDB(db){localStorage.setItem('nexor_key_db',JSON.stringify(db));}
+function initKeyDB(){let db=getKeyDB();VALID_KEYS.forEach(k=>{if(!(k in db))db[k]=null;});saveKeyDB(db);}
+
+// ===== LOADING =====
+const logs=['Initializing system...','Loading core modules...','Verifying integrity...','Connecting to server...','Loading feature engine...','System ready.'];
+function startLoading(){
+  initKeyDB();
+  document.getElementById('deviceIdShow').textContent=getDeviceId();
+  const bar=document.getElementById('loadBar'),pct=document.getElementById('loadPct'),log=document.getElementById('loadLog');
+  let p=0,li=0;
+  const iv=setInterval(()=>{
+    p+=Math.random()*7+3; if(p>100)p=100;
+    bar.style.width=p+'%'; pct.textContent=Math.floor(p)+'%';
+    if(li<logs.length-1&&p>(li+1)*17){li++;log.textContent=logs[li];}
+    if(p>=100){clearInterval(iv);pct.textContent='100%';log.textContent='System ready.';setTimeout(showLogin,700);}
+  },90);
+}
+
+function showLogin(){
+  document.getElementById('loading').style.display='none';
+  const lv=document.getElementById('login'); lv.style.display='flex';
+  const saved=localStorage.getItem('nexor_active_key');
+  if(saved){const db=getKeyDB();if(db[saved]===getDeviceId()){showMain(saved);return;}else localStorage.removeItem('nexor_active_key');}
+}
+
+// ===== LOGIN =====
+function doLogin(){
+  const k=document.getElementById('keyInput').value.trim().toUpperCase();
+  const err=document.getElementById('loginErr');
+  const devId=getDeviceId(); const db=getKeyDB();
+  if(!k){err.textContent='⚠ Masukkan license key';return;}
+  if(!(k in db)){err.textContent='✗ Key tidak valid';return;}
+  if(db[k]===null){db[k]=devId;saveKeyDB(db);localStorage.setItem('nexor_active_key',k);showMain(k);}
+  else if(db[k]===devId){localStorage.setItem('nexor_active_key',k);showMain(k);}
+  else{err.textContent='✗ Key sudah digunakan di device lain';}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login').style.display!=='none')doLogin();});
+
+// ===== MAIN =====
+function showMain(key){
+  document.getElementById('login').style.display='none';
+  document.getElementById('main').style.display='block';
+  document.getElementById('userKeyDisplay').textContent=key;
+  document.getElementById('userAvatar').textContent=key.substr(0,2);
+  loadStates();
+}
+
+function doLogout(){
+  localStorage.removeItem('nexor_active_key');
+  document.getElementById('main').style.display='none';
+  document.getElementById('login').style.display='flex';
+  document.getElementById('keyInput').value='';
+  document.getElementById('loginErr').textContent='';
+}
+
+// ===== TOGGLE =====
+function toggleFeat(el,cardId){
+  document.getElementById(cardId).classList.toggle('active-card',el.checked);
+  saveStates();
+}
+function saveStates(){const s={};['tog1','tog2','tog3','tog4'].forEach(id=>{s[id]=document.getElementById(id).checked;});localStorage.setItem('nexor_states',JSON.stringify(s));}
+function loadStates(){try{const s=JSON.parse(localStorage.getItem('nexor_states'))||{};['tog1','tog2','tog3','tog4'].forEach(id=>{const el=document.getElementById(id);if(s[id]){el.checked=true;el.dispatchEvent(new Event('change'));}});}catch{}}
+
+// ===== GASKEN =====
+let gaskenActive=false;
+function gasken(){
+  if(gaskenActive)return;
+  gaskenActive=true;
+  const btn=document.getElementById('btnGasken');
+  const credit=document.getElementById('devCredit');
+  const log=document.getElementById('injectLog');
+  const flash=document.getElementById('injectFlash');
+  btn.classList.add('locked');
+
+  // flash
+  flash.style.display='block';
+  flash.style.animation='none';
+  void flash.offsetWidth;
+  flash.style.animation='';
+  setTimeout(()=>flash.style.display='none',500);
+
+  // switch monitor to inject log
+  credit.style.display='none';
+  log.style.display='block';
+  log.innerHTML='';
+  credit.classList.add('injecting');
+
+  const lines=[
+    ['[SYS]','INIT_SEQUENCE...'],
+    ['[LOAD]','patch_engine.so'],
+    ['[HOOK]','render_thread'],
+    ['[MAP]','0x7F2A4C → OK'],
+    ['[WRITE]','frame_buffer'],
+    ['[SYNC]','emote_core'],
+    ['[PATCH]','touch_driver'],
+    ['[APPLY]','fps_handler'],
+    ['[CHECK]','integrity OK'],
+    ['[DONE]','ALL APPLIED ✓'],
+  ];
+
+  let idx=0;
+  // 10 detik = 10000ms, 10 lines, tiap line ~900ms
+  const lineInterval=setInterval(()=>{
+    if(idx>=lines.length){clearInterval(lineInterval);return;}
+    const [label,val]=lines[idx];
+    const div=document.createElement('div');
+    div.className='iline'+(idx===lines.length-1?' done':'');
+    div.innerHTML=`<span>${label}</span><span class="ival">${val}</span>`;
+    log.appendChild(div);
+    log.scrollTop=log.scrollHeight;
+    idx++;
+  },900);
+
+  // restore setelah tepat 10 detik
+  setTimeout(()=>{
+    clearInterval(lineInterval);
+    log.style.display='none';
+    log.innerHTML='';
+    credit.style.display='flex';
+    credit.classList.remove('injecting');
+    btn.classList.remove('locked');
+    gaskenActive=false;
+  },10000);
+}
+
+window.onload=startLoading;
+</script>
+</body>
+</html>
